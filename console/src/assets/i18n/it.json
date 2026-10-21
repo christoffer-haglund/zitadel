@@ -2835,7 +2835,13 @@
     },
     "CREATE": {
       "TITLE": "Crea assegnazione ruolo",
-      "DESCRIPTION": "Cerca l'organizzazione, il progetto e i ruoli corrispondenti."
+      "DESCRIPTION": "Cerca l'organizzazione, il progetto e i ruoli corrispondenti.",
+      "EXPIRATION": {
+        "TITLE": "End date",
+        "DESCRIPTION": "Optionally limit the role assignment in time. After the end date, Zitadel no longer includes the roles in tokens, userinfo or introspection, and tokens issued before will not outlive it. Leave empty for a role assignment that does not expire.",
+        "LABEL": "Ends at",
+        "INPAST": "The end date must be in the future."
+      }
     },
     "EDIT": {
       "TITLE": "Modifica assegnazione ruolo"

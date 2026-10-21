@@ -2830,7 +2830,13 @@
     },
     "CREATE": {
       "TITLE": "Criar uma atribuição de função",
-      "DESCRIPTION": "Pesquise a organização, o projeto e as funções correspondentes."
+      "DESCRIPTION": "Pesquise a organização, o projeto e as funções correspondentes.",
+      "EXPIRATION": {
+        "TITLE": "End date",
+        "DESCRIPTION": "Optionally limit the role assignment in time. After the end date, Zitadel no longer includes the roles in tokens, userinfo or introspection, and tokens issued before will not outlive it. Leave empty for a role assignment that does not expire.",
+        "LABEL": "Ends at",
+        "INPAST": "The end date must be in the future."
+      }
     },
     "EDIT": {
       "TITLE": "Alterar atribuição de função"

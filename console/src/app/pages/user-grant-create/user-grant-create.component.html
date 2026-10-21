@@ -42,6 +42,22 @@
         >
         </cnsl-project-roles-table>
       </cnsl-card>
+
+      <h2 class="expiration-title">{{ 'GRANTS.CREATE.EXPIRATION.TITLE' | translate }}</h2>
+      <p class="user-grant-create-desc cnsl-secondary-text">{{ 'GRANTS.CREATE.EXPIRATION.DESCRIPTION' | translate }}</p>
+      <cnsl-form-field class="expiration-field">
+        <cnsl-label>{{ 'GRANTS.CREATE.EXPIRATION.LABEL' | translate }} (optional)</cnsl-label>
+        <input
+          cnslInput
+          type="datetime-local"
+          data-e2e="grant-expiration"
+          [min]="minExpiration"
+          [formControl]="expirationControl"
+        />
+        @if (expirationInPast) {
+          <span cnslError>{{ 'GRANTS.CREATE.EXPIRATION.INPAST' | translate }}</span>
+        }
+      </cnsl-form-field>
     }
     <div class="btn-container">
       @if (currentCreateStep === 1) {
@@ -60,7 +76,14 @@
         <button (click)="previous()" mat-stroked-button class="small-button">
           {{ 'ACTIONS.BACK' | translate }}
         </button>
-        <button color="primary" (click)="addGrant()" mat-raised-button class="big-button" cdkFocusInitial>
+        <button
+          color="primary"
+          (click)="addGrant()"
+          [disabled]="expirationInPast"
+          mat-raised-button
+          class="big-button"
+          cdkFocusInitial
+        >
           {{ 'ACTIONS.SAVE' | translate }}
         </button>
       }

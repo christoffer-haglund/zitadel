@@ -1,5 +1,7 @@
+import { timestampFromDate } from '@bufbuild/protobuf/wkt';
 import { Location } from '@angular/common';
 import { Component, effect, OnDestroy } from '@angular/core';
+import { AbstractControl, FormControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { ProjectType } from 'src/app/modules/project-members/project-members-datasource';
@@ -7,6 +9,7 @@ import { UserTarget } from 'src/app/modules/search-user-autocomplete/search-user
 import { UserGrantContext } from 'src/app/modules/user-grants/user-grants-datasource';
 import { GrantedProject, Project } from 'src/app/proto/generated/zitadel/project_pb';
 import { User } from 'src/app/proto/generated/zitadel/user_pb';
+import { AuthorizationService } from 'src/app/services/authorization.service';
 import { Breadcrumb, BreadcrumbService, BreadcrumbType } from 'src/app/services/breadcrumb.service';
 import { ManagementService } from 'src/app/services/mgmt.service';
 import { ToastService } from 'src/app/services/toast.service';
@@ -29,6 +32,11 @@ export class UserGrantCreateComponent implements OnDestroy {
 
   public rolesList: string[] = [];
 
+  // Optional end date of the role assignment as local date and time (value of a datetime-local input).
+  // If empty, the role assignment does not expire.
+  public expirationControl = new FormControl<string>('', { nonNullable: true, validators: [futureDateValidator] });
+  public minExpiration: string = toDateTimeLocal(new Date());
+
   public createSteps: number = 2;
   public currentCreateStep: number = 1;
 
@@ -46,6 +54,7 @@ export class UserGrantCreateComponent implements OnDestroy {
     private readonly route: ActivatedRoute,
     private readonly mgmtService: ManagementService,
     private readonly newOrganizationService: NewOrganizationService,
+    private readonly authorizationService: AuthorizationService,
     breadcrumbService: BreadcrumbService,
   ) {
     breadcrumbService.setBreadcrumb([
@@ -114,7 +123,7 @@ export class UserGrantCreateComponent implements OnDestroy {
   public addGrant(): void {
     switch (this.context) {
       case UserGrantContext.OWNED_PROJECT:
-        const prom = this.userIds.map((id) => this.userService.addUserGrant(id, this.rolesList, this.project?.id));
+        const prom = this.userIds.map((id) => this.createGrant(id, this.rolesList, this.project?.id));
         Promise.all(prom)
           .then(() => {
             this.toast.showInfo('GRANTS.TOAST.UPDATED', true);
@@ -127,7 +136,7 @@ export class UserGrantCreateComponent implements OnDestroy {
         break;
       case UserGrantContext.GRANTED_PROJECT:
         const promp = this.userIds.map((id) =>
-          this.userService.addUserGrant(id, this.rolesList, this.grantedProject?.projectId, this.grantedProject?.grantId),
+          this.createGrant(id, this.rolesList, this.grantedProject?.projectId, this.grantedProject?.grantId),
         );
         Promise.all(promp)
           .then(() => {
@@ -149,7 +158,7 @@ export class UserGrantCreateComponent implements OnDestroy {
         }
 
         const promu = this.userIds.map((id) =>
-          this.userService.addUserGrant(
+          this.createGrant(
             id,
             this.rolesList,
             this.project?.id ? this.project.id : grantedProjectId ? grantedProjectId : '',
@@ -174,7 +183,7 @@ export class UserGrantCreateComponent implements OnDestroy {
         }
 
         const promn = this.userIds.map((id) =>
-          this.userService.addUserGrant(
+          this.createGrant(
             id,
             this.rolesList,
             this.project ? this.project.id : this.grantedProject ? this.grantedProject.projectId : '',
@@ -192,6 +201,32 @@ export class UserGrantCreateComponent implements OnDestroy {
           });
         break;
     }
+  }
+
+  public get expirationDate(): Date | undefined {
+    const value = this.expirationControl.value;
+    return value ? new Date(value) : undefined;
+  }
+
+  public get expirationInPast(): boolean {
+    // evaluated on every check, as a chosen date can pass while the page is open
+    return isInPast(this.expirationControl.value);
+  }
+
+  // Role assignments with an end date are created through the v2 API, which supports time-bound role assignments.
+  // The expiration is set in the same request, so the role assignment never exists without it.
+  private createGrant(userId: string, roleKeys: string[], projectId?: string, projectGrantId?: string): Promise<unknown> {
+    const expirationDate = this.expirationDate;
+    if (!expirationDate) {
+      return this.userService.addUserGrant(userId, roleKeys, projectId, projectGrantId);
+    }
+    return this.authorizationService.createAuthorization({
+      userId,
+      projectId: projectId ?? '',
+      organizationId: this.activateOrganizationQuery.data()?.id ?? '',
+      roleKeys,
+      expirationDate: timestampFromDate(expirationDate),
+    });
   }
 
   public selectProject(project: Project.AsObject | GrantedProject.AsObject, type: ProjectType): void {
@@ -224,4 +259,18 @@ export class UserGrantCreateComponent implements OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
   }
+}
+
+function isInPast(value: string): boolean {
+  return !!value && new Date(value).getTime() <= Date.now();
+}
+
+function futureDateValidator(control: AbstractControl<string>): ValidationErrors | null {
+  return isInPast(control.value) ? { inPast: true } : null;
+}
+
+// toDateTimeLocal formats a date as the local date and time expected by a datetime-local input.
+function toDateTimeLocal(date: Date): string {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
 }
