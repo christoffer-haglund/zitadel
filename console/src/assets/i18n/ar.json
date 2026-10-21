@@ -2107,7 +2107,9 @@
         "DELETE_TITLE": "حذف منح المشروع",
         "DELETE_DESCRIPTION": "أنت على وشك حذف منح مشروع. هل أنت متأكد؟"
       },
-      "ROLES": "أدوار المشروع"
+      "ROLES": "أدوار المشروع",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "التطبيقات",

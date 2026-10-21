@@ -2114,7 +2114,9 @@
         "DELETE_TITLE": "プロジェクトグラントの削除",
         "DELETE_DESCRIPTION": "プロジェクトグラントを削除しようとしています。本当によろしいですか？"
       },
-      "ROLES": "プロジェクトのロール"
+      "ROLES": "プロジェクトのロール",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "アプリケーション",

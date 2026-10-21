@@ -2114,7 +2114,9 @@
         "DELETE_TITLE": "Projektberechtigung löschen",
         "DELETE_DESCRIPTION": "Sie sind im Begriff eine Projektberechtigung zu entfernen. Wollen Sie fortfahren?"
       },
-      "ROLES": "Projektrollen"
+      "ROLES": "Projektrollen",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Applikationen",

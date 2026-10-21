@@ -2117,7 +2117,9 @@
         "DELETE_TITLE": "Projekt támogatás törlése",
         "DELETE_DESCRIPTION": "Készülsz törölni egy projekt támogatást. Biztos vagy benne?"
       },
-      "ROLES": "Projekt szerepkörök"
+      "ROLES": "Projekt szerepkörök",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Alkalmazások",

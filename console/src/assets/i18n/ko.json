@@ -2113,7 +2113,9 @@
         "DELETE_TITLE": "프로젝트 권한 삭제",
         "DELETE_DESCRIPTION": "프로젝트 권한을 삭제하려고 합니다. 정말 삭제하시겠습니까?"
       },
-      "ROLES": "프로젝트 역할"
+      "ROLES": "프로젝트 역할",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "애플리케이션",

@@ -2116,7 +2116,9 @@
         "DELETE_TITLE": "Excluir concessão de projeto",
         "DELETE_DESCRIPTION": "Você está prestes a excluir uma concessão de projeto. Tem certeza?"
       },
-      "ROLES": "Funções do Projeto"
+      "ROLES": "Funções do Projeto",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Aplicativos",

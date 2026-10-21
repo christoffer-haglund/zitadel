@@ -2117,7 +2117,9 @@
         "DELETE_TITLE": "Видалити надання проекту",
         "DELETE_DESCRIPTION": "Ви збираєтеся видалити надання проекту. Ви впевнені?"
       },
-      "ROLES": "Ролі проекту"
+      "ROLES": "Ролі проекту",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Додатки",

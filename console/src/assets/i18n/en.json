@@ -2119,7 +2119,9 @@
         "DELETE_TITLE": "Delete Project Grant",
         "DELETE_DESCRIPTION": "You are about to delete a project grant. Are you sure?"
       },
-      "ROLES": "Project Roles"
+      "ROLES": "Project Roles",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Applications",

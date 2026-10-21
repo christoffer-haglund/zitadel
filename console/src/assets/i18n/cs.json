@@ -2115,7 +2115,9 @@
         "DELETE_TITLE": "Smazat povolení k projektu",
         "DELETE_DESCRIPTION": "Chystáte se smazat povolení k projektu. Jste si jistí?"
       },
-      "ROLES": "Role v projektu"
+      "ROLES": "Role v projektu",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Aplikace",

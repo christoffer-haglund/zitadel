@@ -27,7 +27,7 @@ import {
   UserGrantRoleDialogResult,
 } from '../user-grant-role-dialog/user-grant-role-dialog.component';
 import { WarnDialogComponent } from '../warn-dialog/warn-dialog.component';
-import { UserGrantContext, UserGrantsDataSource } from './user-grants-datasource';
+import { UserGrantContext, UserGrantsDataSource, userGrantId } from './user-grants-datasource';
 import { Org } from 'src/app/proto/generated/zitadel/org_pb';
 import { QueryClient } from '@tanstack/angular-query-experimental';
 import { NewOrganizationService } from '../../services/new-organization.service';
@@ -56,7 +56,11 @@ export class UserGrantsComponent implements OnInit, AfterViewInit {
   @Input() context: UserGrantContext = UserGrantContext.NONE;
   @Input() refreshOnPreviousRoutes: string[] = [];
 
-  public dataSource: UserGrantsDataSource = new UserGrantsDataSource(this.authService, this.mgmtService);
+  public dataSource: UserGrantsDataSource = new UserGrantsDataSource(
+    this.authService,
+    this.mgmtService,
+    this.authorizationService,
+  );
   public selection: SelectionModel<UserGrantAsObject> = new SelectionModel<UserGrantAsObject>(true, []);
   @ViewChild(PaginatorComponent) public paginator?: PaginatorComponent;
   @ViewChild(MatTable) public table?: MatTable<UserGrantAsObject>;
@@ -99,9 +103,18 @@ export class UserGrantsComponent implements OnInit, AfterViewInit {
     'creationDate',
     'changeDate',
     'state',
+    'expirationDate',
     'roleNamesList',
     'actions',
   ];
+
+  public expirationDate(grant: Parameters<typeof userGrantId>[0]): Date | undefined {
+    return this.dataSource.expirationDates.get(userGrantId(grant));
+  }
+
+  public isExpired(date: Date): boolean {
+    return date.getTime() <= Date.now();
+  }
 
   ngOnInit(): void {
     switch (this.context) {

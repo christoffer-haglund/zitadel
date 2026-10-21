@@ -2114,7 +2114,9 @@
         "DELETE_TITLE": "Rimuovere progetto delegato",
         "DELETE_DESCRIPTION": "Stai per eliminare definitivamente un progetto delegato. Vuoi davvero continuare?"
       },
-      "ROLES": "Ruoli del progetto"
+      "ROLES": "Ruoli del progetto",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Applicazioni",

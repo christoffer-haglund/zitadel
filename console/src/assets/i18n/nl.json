@@ -2114,7 +2114,9 @@
         "DELETE_TITLE": "Verwijder projectverlening",
         "DELETE_DESCRIPTION": "U staat op het punt om een projectverlening te verwijderen. Weet u het zeker?"
       },
-      "ROLES": "Project Rollen"
+      "ROLES": "Project Rollen",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Toepassingen",

@@ -1,4 +1,5 @@
 import { DataSource } from '@angular/cdk/collections';
+import { timestampDate } from '@bufbuild/protobuf/wkt';
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ListMyUserGrantsResponse, UserGrant as AuthUserGrant } from 'src/app/proto/generated/zitadel/auth_pb';
@@ -10,6 +11,7 @@ import {
   UserGrantQuery,
   UserGrantUserIDQuery,
 } from 'src/app/proto/generated/zitadel/user_pb';
+import { AuthorizationService } from 'src/app/services/authorization.service';
 import { GrpcAuthService } from 'src/app/services/grpc-auth.service';
 import { ManagementService } from 'src/app/services/mgmt.service';
 
@@ -23,17 +25,26 @@ export enum UserGrantContext {
 
 type UserGrantAsObject = AuthUserGrant.AsObject | MgmtUserGrant.AsObject;
 
+// userGrantId returns the id of the role assignment, which the auth API returns as grantId.
+export function userGrantId(grant: UserGrantAsObject): string {
+  return 'id' in grant ? grant.id : grant.grantId;
+}
+
 export class UserGrantsDataSource extends DataSource<UserGrantAsObject> {
   public totalResult: number = 0;
   public viewTimestamp!: Timestamp.AsObject;
 
   public grantsSubject: BehaviorSubject<Array<UserGrantAsObject>> = new BehaviorSubject<Array<UserGrantAsObject>>([]);
+  // End dates of the time-bound role assignments on the current page, by role assignment id.
+  // The v1 API does not expose them, so they are looked up through the v2 API.
+  public expirationDates: Map<string, Date> = new Map();
   private loadingSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   public loading$: Observable<boolean> = this.loadingSubject.asObservable();
 
   constructor(
     private authService: GrpcAuthService,
     private userService: ManagementService,
+    private authorizationService: AuthorizationService,
   ) {
     super();
   }
@@ -130,11 +141,12 @@ export class UserGrantsDataSource extends DataSource<UserGrantAsObject> {
 
   private loadResponse(promise: Promise<ListUserGrantResponse.AsObject | ListMyUserGrantsResponse.AsObject>): void {
     promise
-      .then((resp) => {
-        this.loadingSubject.next(false);
+      .then(async (resp) => {
         if (resp.resultList) {
+          this.expirationDates = await this.loadExpirationDates(resp.resultList.map(userGrantId));
           this.grantsSubject.next(resp.resultList);
         }
+        this.loadingSubject.next(false);
         if (resp.details) {
           this.totalResult = resp.details.totalResult;
           if (resp.details.viewTimestamp) {
@@ -147,6 +159,28 @@ export class UserGrantsDataSource extends DataSource<UserGrantAsObject> {
         this.grantsSubject.next([]);
         this.loadingSubject.next(false);
       });
+  }
+
+  private async loadExpirationDates(ids: string[]): Promise<Map<string, Date>> {
+    const expirationDates = new Map<string, Date>();
+    if (!ids.length) {
+      return expirationDates;
+    }
+    try {
+      const resp = await this.authorizationService.listAuthorizations({
+        pagination: { limit: ids.length },
+        filters: [{ filter: { case: 'authorizationIds', value: { ids } } }],
+      });
+      for (const authorization of resp.authorizations) {
+        if (authorization.expirationDate) {
+          expirationDates.set(authorization.id, timestampDate(authorization.expirationDate));
+        }
+      }
+    } catch (error) {
+      // the end dates are informational, the role assignments are still shown without them
+      console.error(error);
+    }
+    return expirationDates;
   }
 
   /**

@@ -2117,7 +2117,9 @@
         "DELETE_TITLE": "Radera projektbeviljande",
         "DELETE_DESCRIPTION": "Du håller på att radera ett projektbeviljande. Är du säker?"
       },
-      "ROLES": "Projektroller"
+      "ROLES": "Projektroller",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Applikationer",

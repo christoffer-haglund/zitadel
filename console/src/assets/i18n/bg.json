@@ -2119,7 +2119,9 @@
         "DELETE_TITLE": "Изтриване на грант за проект",
         "DELETE_DESCRIPTION": "На път сте да изтриете субсидия за проект. "
       },
-      "ROLES": "Роли в проекта"
+      "ROLES": "Роли в проекта",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Приложения",

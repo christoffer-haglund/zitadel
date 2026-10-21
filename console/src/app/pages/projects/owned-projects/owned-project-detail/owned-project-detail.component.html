@@ -198,7 +198,16 @@
         <cnsl-user-grants
           [context]="UserGrantContext.OWNED_PROJECT"
           [projectId]="projectId"
-          [displayedColumns]="['select', 'user', 'creationDate', 'changeDate', 'state', 'roleNamesList', 'actions']"
+          [displayedColumns]="[
+            'select',
+            'user',
+            'creationDate',
+            'changeDate',
+            'state',
+            'expirationDate',
+            'roleNamesList',
+            'actions',
+          ]"
           [refreshOnPreviousRoutes]="['/grant-create/project/' + projectId]"
           [disableWrite]="(['user.grant.write$', 'user.grant.write:' + projectId] | hasRole | async) === false"
           [disableDelete]="(['user.grant.delete$', 'user.grant.delete:' + projectId] | hasRole | async) === false"

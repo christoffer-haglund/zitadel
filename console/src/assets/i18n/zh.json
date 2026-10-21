@@ -2117,7 +2117,9 @@
         "DELETE_TITLE": "删除项目授权",
         "DELETE_DESCRIPTION": "您即将删除项目授权。你确定吗？"
       },
-      "ROLES": "项目角色"
+      "ROLES": "项目角色",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "应用",

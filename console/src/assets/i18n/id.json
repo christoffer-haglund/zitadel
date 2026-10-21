@@ -2111,7 +2111,9 @@
         "DELETE_TITLE": "Hapus hibah proyek",
         "DELETE_DESCRIPTION": "Anda akan menghapus hibah proyek. Apa kamu yakin?"
       },
-      "ROLES": "Peran Proyek"
+      "ROLES": "Peran Proyek",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Aplikasi",

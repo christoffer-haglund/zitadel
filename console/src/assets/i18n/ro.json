@@ -2111,7 +2111,9 @@
         "DELETE_TITLE": "Ștergeți grantul de proiect",
         "DELETE_DESCRIPTION": "Sunteți pe cale să ștergeți un grant de proiect. Sigur doriți să continuați?"
       },
-      "ROLES": "Roluri de proiect"
+      "ROLES": "Roluri de proiect",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Aplicații",

@@ -2117,7 +2117,9 @@
         "DELETE_TITLE": "Proje yetkisini sil",
         "DELETE_DESCRIPTION": "Bir proje yetkisini silmek üzeresiniz. Emin misiniz?"
       },
-      "ROLES": "Proje Rolleri"
+      "ROLES": "Proje Rolleri",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Uygulamalar",

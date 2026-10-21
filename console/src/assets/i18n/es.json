@@ -2115,7 +2115,9 @@
         "DELETE_TITLE": "Borrar concesión de proyecto",
         "DELETE_DESCRIPTION": "Estás a punto de borrar una concesión de proyecto. ¿Estás seguro?"
       },
-      "ROLES": "Roles del proyecto"
+      "ROLES": "Roles del proyecto",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Aplicaciones",

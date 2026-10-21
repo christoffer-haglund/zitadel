@@ -2203,7 +2203,9 @@
         "DELETE_TITLE": "Удалить допуск проекта",
         "DELETE_DESCRIPTION": "Вы собираетесь удалить допуск проекта. Вы уверены?"
       },
-      "ROLES": "Роли проекта"
+      "ROLES": "Роли проекта",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Приложения",

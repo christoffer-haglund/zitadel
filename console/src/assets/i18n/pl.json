@@ -2113,7 +2113,9 @@
         "DELETE_TITLE": "Usuń udzielenia dostępu do projektu",
         "DELETE_DESCRIPTION": "Zamierzasz usunąć udzielenie dostępu do projektu. Czy na pewno?"
       },
-      "ROLES": "Role projektu"
+      "ROLES": "Role projektu",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Aplikacje",

@@ -2114,7 +2114,9 @@
         "DELETE_TITLE": "Supprimer un octroi de projet",
         "DELETE_DESCRIPTION": "Vous êtes sur le point de supprimer un accord de projet. Êtes-vous sûr ?"
       },
-      "ROLES": "Rôles du projet"
+      "ROLES": "Rôles du projet",
+      "EXPIRATIONDATE": "End date",
+      "EXPIRED": "Expired"
     },
     "APP": {
       "TITLE": "Applications",
