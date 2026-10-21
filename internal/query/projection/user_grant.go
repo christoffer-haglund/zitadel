@@ -34,6 +34,7 @@ const (
 	UserGrantGrantID              = "grant_id"
 	UserGrantGrantedOrg           = "granted_org"
 	UserGrantRoles                = "roles"
+	UserGrantExpirationDate       = "expiration_date"
 )
 
 type userGrantProjection struct {
@@ -65,6 +66,7 @@ func (*userGrantProjection) Init() *old_handler.Check {
 			handler.NewColumn(UserGrantGrantID, handler.ColumnTypeText),
 			handler.NewColumn(UserGrantGrantedOrg, handler.ColumnTypeText),
 			handler.NewColumn(UserGrantRoles, handler.ColumnTypeTextArray, handler.Nullable()),
+			handler.NewColumn(UserGrantExpirationDate, handler.ColumnTypeTimestamp, handler.Nullable()),
 		},
 			handler.NewPrimaryKey(UserGrantInstanceID, UserGrantID),
 			handler.WithIndex(handler.NewIndex("user_id", []string{UserGrantUserID})),
@@ -105,6 +107,10 @@ func (p *userGrantProjection) Reducers() []handler.AggregateReducer {
 				{
 					Event:  usergrant.UserGrantReactivatedType,
 					Reduce: p.reduceReactivated,
+				},
+				{
+					Event:  usergrant.UserGrantExpirationSetType,
+					Reduce: p.reduceExpirationSet,
 				},
 			},
 		},
@@ -192,6 +198,27 @@ func (p *userGrantProjection) reduceAdded(event eventstore.Event) (*handler.Stat
 			handler.NewCol(UserGrantGrantedOrg, grantOwner),
 			handler.NewCol(UserGrantRoles, database.TextArray[string](e.RoleKeys)),
 			handler.NewCol(UserGrantState, domain.UserGrantStateActive),
+			handler.NewCol(UserGrantExpirationDate, e.ExpirationDate),
+		},
+	), nil
+}
+
+func (p *userGrantProjection) reduceExpirationSet(event eventstore.Event) (*handler.Statement, error) {
+	e, ok := event.(*usergrant.UserGrantExpirationSetEvent)
+	if !ok {
+		return nil, zerrors.ThrowInvalidArgumentf(nil, "PROJE-Exp1p", "reduce.wrong.event.type %s", usergrant.UserGrantExpirationSetType)
+	}
+
+	return handler.NewUpdateStatement(
+		e,
+		[]handler.Column{
+			handler.NewCol(UserGrantChangeDate, e.CreatedAt()),
+			handler.NewCol(UserGrantExpirationDate, e.ExpirationDate),
+			handler.NewCol(UserGrantSequence, e.Sequence()),
+		},
+		[]handler.Condition{
+			handler.NewCond(UserGrantID, e.Aggregate().ID),
+			handler.NewCond(UserGrantInstanceID, e.Aggregate().InstanceID),
 		},
 	), nil
 }

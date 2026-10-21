@@ -41,6 +41,8 @@ func (p *relationalTablesProjection) reduceAuthorizationAdded(event eventstore.E
 			CreatedAt:  e.CreationDate(),
 			UpdatedAt:  e.CreationDate(),
 			State:      repoDomain.AuthorizationStateActive,
+			// time-bound authorizations are only effective until their expiration date
+			ExpirationDate: e.ExpirationDate,
 		})
 	}), nil
 }
@@ -130,6 +132,27 @@ func (p *relationalTablesProjection) reduceAuthorizationReactivated(event events
 			nil,
 			repo.SetUpdatedAt(event.CreatedAt()),
 			repo.SetState(repoDomain.AuthorizationStateActive),
+		)
+		return err
+	}), nil
+}
+
+func (p *relationalTablesProjection) reduceAuthorizationExpirationSet(event eventstore.Event) (*handler.Statement, error) {
+	e, ok := event.(*usergrant.UserGrantExpirationSetEvent)
+	if !ok {
+		return nil, zerrors.ThrowInvalidArgumentf(nil, "HANDL-Exp1r", "reduce.wrong.event.type %s", usergrant.UserGrantExpirationSetType)
+	}
+	return handler.NewStatement(e, func(ctx context.Context, ex handler.Executer, _ string) error {
+		tx, ok := ex.(*sql.Tx)
+		if !ok {
+			return zerrors.ThrowInvalidArgumentf(nil, "HANDL-Exp1s", "reduce.wrong.db.pool %T", ex)
+		}
+		repo := repository.AuthorizationRepository()
+		_, err := repo.Update(ctx, v3_sql.SQLTx(tx),
+			repo.PrimaryKeyCondition(e.Aggregate().InstanceID, e.Aggregate().ID),
+			nil,
+			repo.SetUpdatedAt(e.CreatedAt()),
+			repo.SetExpirationDate(e.ExpirationDate),
 		)
 		return err
 	}), nil

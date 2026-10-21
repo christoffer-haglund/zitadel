@@ -3,6 +3,7 @@ package usergrant
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/zitadel/zitadel/internal/eventstore"
 	"github.com/zitadel/zitadel/internal/zerrors"
@@ -18,6 +19,7 @@ const (
 	UserGrantCascadeRemovedType = userGrantEventTypePrefix + "cascade.removed"
 	UserGrantDeactivatedType    = userGrantEventTypePrefix + "deactivated"
 	UserGrantReactivatedType    = userGrantEventTypePrefix + "reactivated"
+	UserGrantExpirationSetType  = userGrantEventTypePrefix + "expiration.set"
 )
 
 func NewAddUserGrantUniqueConstraint(resourceOwner, userID, projectID, projectGrantID string) *eventstore.UniqueConstraint {
@@ -40,6 +42,9 @@ type UserGrantAddedEvent struct {
 	ProjectID      string   `json:"projectId,omitempty"`
 	ProjectGrantID string   `json:"grantId,omitempty"`
 	RoleKeys       []string `json:"roleKeys,omitempty"`
+	// ExpirationDate is the point in time after which the grant is no longer effective.
+	// nil means the grant does not expire.
+	ExpirationDate *time.Time `json:"expirationDate,omitempty"`
 	// owner orgs are not persisted in the event payload.
 	userResourceOwner    string
 	projectResourceOwner string
@@ -91,6 +96,12 @@ func NewUserGrantAddedEvent(
 		ProjectGrantID: projectGrantID,
 		RoleKeys:       roleKeys,
 	}
+}
+
+// WithExpirationDate sets the point in time after which the grant is no longer effective.
+func (e *UserGrantAddedEvent) WithExpirationDate(expirationDate *time.Time) *UserGrantAddedEvent {
+	e.ExpirationDate = expirationDate
+	return e
 }
 
 func UserGrantAddedEventMapper(event eventstore.Event) (eventstore.Event, error) {
@@ -331,4 +342,42 @@ func UserGrantReactivatedEventMapper(event eventstore.Event) (eventstore.Event, 
 	return &UserGrantReactivatedEvent{
 		BaseEvent: *eventstore.BaseEventFromRepo(event),
 	}, nil
+}
+
+// UserGrantExpirationSetEvent sets or removes the expiration date of a user grant.
+// It is intentionally separate from [UserGrantChangedEvent] and [UserGrantCascadeChangedEvent],
+// so that role changes (including cascades from project role removals) can never alter the expiration.
+type UserGrantExpirationSetEvent struct {
+	eventstore.BaseEvent `json:"-"`
+	// ExpirationDate is nil if the expiration was removed.
+	ExpirationDate *time.Time `json:"expirationDate"`
+}
+
+func (e *UserGrantExpirationSetEvent) Payload() interface{} {
+	return e
+}
+
+func (e *UserGrantExpirationSetEvent) UniqueConstraints() []*eventstore.UniqueConstraint {
+	return nil
+}
+
+func NewUserGrantExpirationSetEvent(ctx context.Context, aggregate *eventstore.Aggregate, expirationDate *time.Time) *UserGrantExpirationSetEvent {
+	return &UserGrantExpirationSetEvent{
+		BaseEvent: *eventstore.NewBaseEventForPush(
+			ctx,
+			aggregate,
+			UserGrantExpirationSetType,
+		),
+		ExpirationDate: expirationDate,
+	}
+}
+
+func UserGrantExpirationSetEventMapper(event eventstore.Event) (eventstore.Event, error) {
+	e := &UserGrantExpirationSetEvent{
+		BaseEvent: *eventstore.BaseEventFromRepo(event),
+	}
+	if err := event.Unmarshal(e); err != nil {
+		return nil, zerrors.ThrowInternal(err, "UGRANT-Exp1r", "unable to unmarshal user grant expiration")
+	}
+	return e, nil
 }

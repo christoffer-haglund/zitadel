@@ -260,6 +260,21 @@ func NewNumberCondition[V Number](col Column, op NumberOperation, value V) Condi
 	}
 }
 
+// NewNowCondition creates a condition that compares a timestamp column with the current time of the database.
+// Using the database clock keeps all checks consistent, independent of the clock of the calling process.
+func NewNowCondition(col Column, op NumberOperation) Condition {
+	return valueCondition{
+		col: col,
+		write: func(builder *StatementBuilder) {
+			col.WriteQualified(builder)
+			builder.WriteRune(' ')
+			builder.WriteString(op.String())
+			builder.WriteRune(' ')
+			builder.WriteString(string(NowInstruction))
+		},
+	}
+}
+
 // NewBooleanCondition creates a condition that compares a boolean column with a value.
 func NewBooleanCondition[V Boolean](col Column, value V) Condition {
 	return valueCondition{

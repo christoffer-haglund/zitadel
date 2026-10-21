@@ -32,6 +32,9 @@ type UserGrant struct {
 	// GrantID represents the project grant id
 	GrantID string                `json:"grant_id,omitempty"`
 	State   domain.UserGrantState `json:"state,omitempty"`
+	// ExpirationDate is the point in time after which the grant is no longer effective.
+	// nil means the grant does not expire.
+	ExpirationDate *time.Time `json:"expiration_date,omitempty"`
 
 	UserID                  string          `json:"user_id,omitempty"`
 	Username                string          `json:"username,omitempty"`
@@ -207,6 +210,30 @@ func NewUserGrantStateQuery(value domain.UserGrantState) (SearchQuery, error) {
 	return NewNumberQuery(UserGrantState, value, NumberEquals)
 }
 
+// NewUserGrantNotExpiredQuery filters out grants whose expiration date has passed.
+// The database clock is used, so the check is consistent with the SQL based checks
+// performed during token issuance and login.
+func NewUserGrantNotExpiredQuery() (SearchQuery, error) {
+	return &userGrantNotExpiredQuery{}, nil
+}
+
+type userGrantNotExpiredQuery struct{}
+
+func (q *userGrantNotExpiredQuery) toQuery(query sq.SelectBuilder) sq.SelectBuilder {
+	return query.Where(q.comp())
+}
+
+func (q *userGrantNotExpiredQuery) comp() sq.Sqlizer {
+	return sq.Or{
+		sq.Eq{UserGrantExpirationDate.identifier(): nil},
+		sq.Expr(UserGrantExpirationDate.identifier() + " > now()"),
+	}
+}
+
+func (q *userGrantNotExpiredQuery) Col() Column {
+	return UserGrantExpirationDate
+}
+
 func NewUserGrantWithGrantedQuery(owner string) (SearchQuery, error) {
 	orgQuery, err := NewUserGrantResourceOwnerSearchQuery(owner)
 	if err != nil {
@@ -274,6 +301,10 @@ var (
 	}
 	UserGrantState = Column{
 		name:  projection.UserGrantState,
+		table: userGrantTable,
+	}
+	UserGrantExpirationDate = Column{
+		name:  projection.UserGrantExpirationDate,
 		table: userGrantTable,
 	}
 
@@ -401,6 +432,7 @@ func prepareUserGrantQuery() (sq.SelectBuilder, func(*sql.Row) (*UserGrant, erro
 			UserGrantRoles.identifier(),
 			"roles.role_information",
 			UserGrantState.identifier(),
+			UserGrantExpirationDate.identifier(),
 
 			UserGrantUserID.identifier(),
 			UserUsernameCol.identifier(),
@@ -478,6 +510,7 @@ func prepareUserGrantQuery() (sq.SelectBuilder, func(*sql.Row) (*UserGrant, erro
 				&g.Roles,
 				&roles,
 				&g.State,
+				&g.ExpirationDate,
 
 				&g.UserID,
 				&username,
@@ -549,6 +582,7 @@ func prepareUserGrantsQuery() (sq.SelectBuilder, func(*sql.Rows) (*UserGrants, e
 			UserGrantRoles.identifier(),
 			"roles.role_information",
 			UserGrantState.identifier(),
+			UserGrantExpirationDate.identifier(),
 
 			UserGrantUserID.identifier(),
 			UserUsernameCol.identifier(),
@@ -631,6 +665,7 @@ func prepareUserGrantsQuery() (sq.SelectBuilder, func(*sql.Rows) (*UserGrants, e
 					&g.Roles,
 					&roles,
 					&g.State,
+					&g.ExpirationDate,
 
 					&g.UserID,
 					&username,

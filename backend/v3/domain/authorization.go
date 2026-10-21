@@ -25,6 +25,9 @@ type Authorization struct {
 	CreatedAt  time.Time          `json:"createdAt,omitempty" db:"created_at"`
 	UpdatedAt  time.Time          `json:"updatedAt,omitempty" db:"updated_at"`
 	Roles      []string           `json:"roles,omitempty" db:"roles"`
+	// ExpirationDate is the point in time after which the authorization is no longer effective.
+	// nil means the authorization does not expire.
+	ExpirationDate *time.Time `json:"expirationDate,omitempty" db:"expiration_date"`
 }
 
 // authorizationColumns defines all the columns of the authorizations table.
@@ -47,6 +50,8 @@ type authorizationColumns interface {
 	CreatedAtColumn() database.Column
 	// UpdatedAtColumn returns the column for the updated_at field.
 	UpdatedAtColumn() database.Column
+	// ExpirationDateColumn returns the column for the expiration_date field.
+	ExpirationDateColumn() database.Column
 }
 
 // authorizationConditions defines all the conditions for the authorizations table.
@@ -69,6 +74,10 @@ type authorizationConditions interface {
 	ExistsRole(cond database.Condition) database.Condition
 	// StateCondition returns a filter on the name field.
 	StateCondition(state AuthorizationState) database.Condition
+	// NotExpiredCondition returns a filter on authorizations which are still effective:
+	// they either have no expiration date, or it is after the current time of the database.
+	// Every query deciding about access must use it, as expired authorizations are not removed.
+	NotExpiredCondition() database.Condition
 }
 
 // authorizationChanges defines all the changes for the authorizations table.
@@ -79,6 +88,9 @@ type authorizationChanges interface {
 	SetUpdatedAt(updatedAt time.Time) database.Change
 	// SetState sets the state column.
 	SetState(state AuthorizationState) database.Change
+	// SetExpirationDate sets the expiration_date column.
+	// nil removes the expiration, so the authorization does not expire.
+	SetExpirationDate(expirationDate *time.Time) database.Change
 }
 
 //go:generate mockgen -typed -package domainmock -destination ./mock/authorization.mock.go . AuthorizationRepository

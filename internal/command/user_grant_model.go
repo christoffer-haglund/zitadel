@@ -2,6 +2,7 @@ package command
 
 import (
 	"slices"
+	"time"
 
 	"github.com/zitadel/zitadel/internal/domain"
 	"github.com/zitadel/zitadel/internal/eventstore"
@@ -18,6 +19,7 @@ type UserGrantWriteModel struct {
 	ProjectGrantID string
 	RoleKeys       []string
 	State          domain.UserGrantState
+	ExpirationDate *time.Time
 }
 
 func NewUserGrantWriteModel(userGrantID string, resourceOwner string) *UserGrantWriteModel {
@@ -39,6 +41,9 @@ func (wm *UserGrantWriteModel) Reduce() error {
 			wm.RoleKeys = e.RoleKeys
 			wm.State = domain.UserGrantStateActive
 			wm.ResourceOwner = e.Aggregate().ResourceOwner
+			wm.ExpirationDate = e.ExpirationDate
+		case *usergrant.UserGrantExpirationSetEvent:
+			wm.ExpirationDate = e.ExpirationDate
 		case *usergrant.UserGrantChangedEvent:
 			wm.RoleKeys = e.RoleKeys
 		case *usergrant.UserGrantCascadeChangedEvent:
@@ -73,7 +78,8 @@ func (wm *UserGrantWriteModel) Query() *eventstore.SearchQueryBuilder {
 			usergrant.UserGrantDeactivatedType,
 			usergrant.UserGrantReactivatedType,
 			usergrant.UserGrantRemovedType,
-			usergrant.UserGrantCascadeRemovedType).
+			usergrant.UserGrantCascadeRemovedType,
+			usergrant.UserGrantExpirationSetType).
 		Builder()
 
 	if wm.ResourceOwner != "" {

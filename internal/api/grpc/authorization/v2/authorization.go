@@ -2,6 +2,7 @@ package authorization
 
 import (
 	"context"
+	"time"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -19,6 +20,7 @@ func (s *Server) CreateAuthorization(ctx context.Context, req *connect.Request[a
 		ObjectRoot: models.ObjectRoot{
 			ResourceOwner: req.Msg.GetOrganizationId(),
 		},
+		ExpirationDate: timestampFromPb(req.Msg.GetExpirationDate()),
 	}
 	grant, err := s.command.AddUserGrant(ctx, grant, s.command.NewPermissionCheckUserGrantWrite(ctx))
 	if err != nil {
@@ -73,4 +75,31 @@ func (s *Server) DeactivateAuthorization(ctx context.Context, request *connect.R
 	return connect.NewResponse(&authorization.DeactivateAuthorizationResponse{
 		ChangeDate: timestamppb.New(details.EventDate),
 	}), nil
+}
+
+func (s *Server) SetAuthorizationExpiration(ctx context.Context, request *connect.Request[authorization.SetAuthorizationExpirationRequest]) (*connect.Response[authorization.SetAuthorizationExpirationResponse], error) {
+	userGrant, err := s.command.SetUserGrantExpiration(ctx, request.Msg.Id, "", timestampFromPb(request.Msg.GetExpirationDate()), s.command.NewPermissionCheckUserGrantWrite(ctx))
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&authorization.SetAuthorizationExpirationResponse{
+		ChangeDate: timestamppb.New(userGrant.ChangeDate),
+	}), nil
+}
+
+// timestampFromPb returns nil if the timestamp is not set.
+func timestampFromPb(ts *timestamppb.Timestamp) *time.Time {
+	if ts == nil {
+		return nil
+	}
+	t := ts.AsTime()
+	return &t
+}
+
+// timestampToPb returns nil if the time is not set.
+func timestampToPb(t *time.Time) *timestamppb.Timestamp {
+	if t == nil {
+		return nil
+	}
+	return timestamppb.New(*t)
 }

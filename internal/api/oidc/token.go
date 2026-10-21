@@ -41,7 +41,9 @@ func (s *Server) accessTokenResponseFromSession(ctx context.Context, client op.C
 	// If the session does not have a token ID, it is an implicit ID-Token only response.
 	if session.TokenID != "" {
 		if client.AccessTokenType() == op.AccessTokenTypeJWT {
-			resp.AccessToken, err = s.createJWT(ctx, client, session, getUserInfo, accessTokenRoleAssertion, getSigner)
+			var exp time.Time
+			resp.AccessToken, exp, err = s.createJWT(ctx, client, session, getUserInfo, accessTokenRoleAssertion, getSigner)
+			resp.ExpiresIn = timeToOIDCExpiresIn(exp)
 		} else {
 			resp.AccessToken, err = op.CreateBearerToken(session.TokenID, session.UserID, s.opCrypto)
 		}
@@ -61,13 +63,15 @@ func (s *Server) getSignerOnce() sign.SignerFunc {
 }
 
 // userInfoFunc is a getter function that allows add-hoc retrieval of a user.
-type userInfoFunc func(ctx context.Context, roleAssertion bool, triggerType domain.TriggerType, actor *domain.TokenActor) (*oidc.UserInfo, error)
+// Besides the userinfo, it returns the earliest expiration date of the time-bound grants
+// the userinfo is based on, or nil if none of them expires.
+type userInfoFunc func(ctx context.Context, roleAssertion bool, triggerType domain.TriggerType, actor *domain.TokenActor) (*oidc.UserInfo, *time.Time, error)
 
 // getUserInfo returns a function which retrieves userinfo from the database once.
 // However, each time, role claims are asserted and also action flows will trigger.
 func (s *Server) getUserInfo(userID, projectID, clientID string, projectRoleAssertion, userInfoAssertion bool, scope []string) userInfoFunc {
 	userInfo := s.userInfo(userID, scope, projectID, clientID, projectRoleAssertion, userInfoAssertion, false)
-	return func(ctx context.Context, roleAssertion bool, triggerType domain.TriggerType, actor *domain.TokenActor) (*oidc.UserInfo, error) {
+	return func(ctx context.Context, roleAssertion bool, triggerType domain.TriggerType, actor *domain.TokenActor) (*oidc.UserInfo, *time.Time, error) {
 		return userInfo(ctx, roleAssertion, triggerType, actor)
 	}
 }
@@ -76,7 +80,7 @@ func (*Server) createIDToken(ctx context.Context, client op.Client, getUserInfo 
 	ctx, span := tracing.NewSpan(ctx)
 	defer func() { span.EndWithError(err) }()
 
-	userInfo, err := getUserInfo(ctx, roleAssertion, domain.TriggerTypePreUserinfoCreation, actor)
+	userInfo, grantsExpiration, err := getUserInfo(ctx, roleAssertion, domain.TriggerTypePreUserinfoCreation, actor)
 	if err != nil {
 		return "", 0, err
 	}
@@ -86,7 +90,7 @@ func (*Server) createIDToken(ctx context.Context, client op.Client, getUserInfo 
 		return "", 0, err
 	}
 
-	expTime := time.Now().Add(client.IDTokenLifetime()).Add(client.ClockSkew())
+	expTime := capExpiration(time.Now().Add(client.IDTokenLifetime()).Add(client.ClockSkew()), grantsExpiration)
 	claims := oidc.NewIDTokenClaims(
 		op.IssuerFromContext(ctx),
 		"",
@@ -116,20 +120,22 @@ func timeToOIDCExpiresIn(exp time.Time) uint64 {
 	return uint64(time.Until(exp) / time.Second)
 }
 
-func (s *Server) createJWT(ctx context.Context, client op.Client, session *command.OIDCSession, getUserInfo userInfoFunc, assertRoles bool, getSigner sign.SignerFunc) (_ string, err error) {
+// createJWT creates a JWT access token and returns it with its expiration.
+// The expiration is capped to the earliest expiration of time-bound grants the token is based on.
+func (s *Server) createJWT(ctx context.Context, client op.Client, session *command.OIDCSession, getUserInfo userInfoFunc, assertRoles bool, getSigner sign.SignerFunc) (_ string, exp time.Time, err error) {
 	ctx, span := tracing.NewSpan(ctx)
 	defer func() { span.EndWithError(err) }()
 
-	userInfo, err := getUserInfo(ctx, assertRoles, domain.TriggerTypePreAccessTokenCreation, session.Actor)
+	userInfo, grantsExpiration, err := getUserInfo(ctx, assertRoles, domain.TriggerTypePreAccessTokenCreation, session.Actor)
 	if err != nil {
-		return "", err
+		return "", time.Time{}, err
 	}
 	signer, _, err := getSigner(ctx)
 	if err != nil {
-		return "", err
+		return "", time.Time{}, err
 	}
 
-	expTime := session.Expiration.Add(client.ClockSkew())
+	expTime := capExpiration(session.Expiration.Add(client.ClockSkew()), grantsExpiration)
 	claims := oidc.NewAccessTokenClaims(
 		op.IssuerFromContext(ctx),
 		userInfo.Subject,
@@ -142,5 +148,6 @@ func (s *Server) createJWT(ctx context.Context, client op.Client, session *comma
 	claims.Actor = actorDomainToClaims(session.Actor)
 	claims.Claims = userInfo.Claims
 
-	return crypto.Sign(claims, signer)
+	token, err := crypto.Sign(claims, signer)
+	return token, expTime, err
 }

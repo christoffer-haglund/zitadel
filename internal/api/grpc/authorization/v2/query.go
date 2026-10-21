@@ -185,8 +185,9 @@ func userGrantToPb(userGrant *query.UserGrant) *authorization.Authorization {
 			AvatarUrl:          userGrant.AvatarURL,
 			OrganizationId:     userGrant.UserResourceOwner,
 		},
-		State: userGrantStateToPb(userGrant.State),
-		Roles: rolesToPb(userGrant.RoleInformation),
+		State:          userGrantStateToPb(userGrant.State),
+		Roles:          rolesToPb(userGrant.RoleInformation),
+		ExpirationDate: timestampToPb(userGrant.ExpirationDate),
 	}
 }
 

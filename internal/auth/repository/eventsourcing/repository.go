@@ -121,7 +121,12 @@ func (q queryViewWrapper) UserGrantsByProjectAndUserID(ctx context.Context, proj
 	if err != nil {
 		return nil, err
 	}
-	queries := &query.UserGrantsQueries{Queries: []query.SearchQuery{userGrantUserID, userGrantProjectID, activeQuery}}
+	// time-bound grants are only effective until their expiration date
+	notExpiredQuery, err := query.NewUserGrantNotExpiredQuery()
+	if err != nil {
+		return nil, err
+	}
+	queries := &query.UserGrantsQueries{Queries: []query.SearchQuery{userGrantUserID, userGrantProjectID, activeQuery, notExpiredQuery}}
 	grants, err := q.Queries.UserGrants(ctx, queries, true, nil)
 	if err != nil {
 		return nil, err

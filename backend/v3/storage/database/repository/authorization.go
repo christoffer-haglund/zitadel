@@ -50,8 +50,8 @@ func (a authorization) Create(ctx context.Context, client database.QueryExecutor
 	}
 
 	builder := database.NewStatementBuilder("WITH roles AS (INSERT INTO zitadel.authorization_roles (instance_id, authorization_id, grant_id, project_id, role_key)"+
-		" VALUES ($1, $2, $3, $4, unnest($5::text[]))) INSERT INTO zitadel.authorizations (instance_id, id, grant_id, project_id, user_id, state, created_at, updated_at) VALUES ($1, $2, $3, $4, $6, $7, ",
-		authorization.InstanceID, authorization.ID, authorization.GrantID, authorization.ProjectID, authorization.Roles, authorization.UserID, authorization.State,
+		" VALUES ($1, $2, $3, $4, unnest($5::text[]))) INSERT INTO zitadel.authorizations (instance_id, id, grant_id, project_id, user_id, state, expiration_date, created_at, updated_at) VALUES ($1, $2, $3, $4, $6, $7, $8, ",
+		authorization.InstanceID, authorization.ID, authorization.GrantID, authorization.ProjectID, authorization.Roles, authorization.UserID, authorization.State, authorization.ExpirationDate,
 	)
 	builder.WriteArgs(createdAt, updatedAt)
 	builder.WriteString(") RETURNING created_at, updated_at")
@@ -77,6 +77,7 @@ const queryAuthorizationStmt = `SELECT zitadel.authorizations.instance_id,
        zitadel.authorizations.state,
        zitadel.authorizations.created_at,
        zitadel.authorizations.updated_at,
+       zitadel.authorizations.expiration_date,
        ARRAY_AGG(authorization_roles.role_key)
        FILTER (WHERE authorization_roles.authorization_id IS NOT NULL) AS roles
 FROM zitadel.authorizations
@@ -285,6 +286,10 @@ func (a authorization) UpdatedAtColumn() database.Column {
 	return database.NewColumn(a.unqualifiedTableName(), "updated_at")
 }
 
+func (a authorization) ExpirationDateColumn() database.Column {
+	return database.NewColumn(a.unqualifiedTableName(), "expiration_date")
+}
+
 // -------------------------------------------------------------
 // conditions
 // -------------------------------------------------------------
@@ -346,6 +351,16 @@ func (a authorization) StateCondition(state domain.AuthorizationState) database.
 	return database.NewTextCondition(a.StateColumn(), database.TextOperationEqual, state.String())
 }
 
+// NotExpiredCondition implements [domain.authorizationConditions]
+// A NULL expiration date means the authorization does not expire.
+// Note that a plain comparison would evaluate to NULL for such rows and filter them out.
+func (a authorization) NotExpiredCondition() database.Condition {
+	return database.Or(
+		database.IsNull(a.ExpirationDateColumn()),
+		database.NewNowCondition(a.ExpirationDateColumn(), database.NumberOperationGreaterThan),
+	)
+}
+
 // -------------------------------------------------------------
 // changes
 // -------------------------------------------------------------
@@ -353,6 +368,11 @@ func (a authorization) StateCondition(state domain.AuthorizationState) database.
 // SetState implements [domain.authorizationChanges]
 func (a authorization) SetState(state domain.AuthorizationState) database.Change {
 	return database.NewChange(a.StateColumn(), state)
+}
+
+// SetExpirationDate implements [domain.authorizationChanges]
+func (a authorization) SetExpirationDate(expirationDate *time.Time) database.Change {
+	return database.NewChangePtr(a.ExpirationDateColumn(), expirationDate)
 }
 
 func (a authorization) SetUpdatedAt(updatedAt time.Time) database.Change {

@@ -34,12 +34,14 @@ metadata as (
 ),
 -- get all user grants, needed for the orgs query
 user_grants as (
-	select id, grant_id, state, creation_date, change_date, sequence, user_id, roles, resource_owner, project_id
+	select id, grant_id, state, creation_date, change_date, sequence, user_id, roles, resource_owner, project_id, expiration_date
 	from projections.user_grants5
 	where user_id = $1
 	and instance_id = $2
 	and project_id = any($3)
     and state = 1
+	-- time-bound grants are only effective until their expiration date
+	and (expiration_date is null or expiration_date > now())
 	{{ if . -}}
 	and resource_owner = any($4)
 	{{- end }}

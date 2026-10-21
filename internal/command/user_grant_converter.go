@@ -10,5 +10,6 @@ func userGrantWriteModelToUserGrant(writeModel *UserGrantWriteModel) *domain.Use
 		ProjectGrantID: writeModel.ProjectGrantID,
 		RoleKeys:       writeModel.RoleKeys,
 		State:          writeModel.State,
+		ExpirationDate: writeModel.ExpirationDate,
 	}
 }

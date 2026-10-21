@@ -945,6 +945,10 @@ func (p *relationalTablesProjection) Reducers() []handler.AggregateReducer {
 					Event:  usergrant.UserGrantReactivatedType,
 					Reduce: p.reduceAuthorizationReactivated,
 				},
+				{
+					Event:  usergrant.UserGrantExpirationSetType,
+					Reduce: p.reduceAuthorizationExpirationSet,
+				},
 			},
 		},
 		{

@@ -498,11 +498,17 @@ func (p *Storage) getGrants(ctx context.Context, userID, applicationID string) (
 	if err != nil {
 		return nil, err
 	}
+	// time-bound grants are only effective until their expiration date
+	notExpiredQuery, err := query.NewUserGrantNotExpiredQuery()
+	if err != nil {
+		return nil, err
+	}
 	return p.query.UserGrants(ctx, &query.UserGrantsQueries{
 		Queries: []query.SearchQuery{
 			projectQuery,
 			userIDQuery,
 			activeQuery,
+			notExpiredQuery,
 		},
 	}, true, nil)
 }

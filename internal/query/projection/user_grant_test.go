@@ -3,7 +3,9 @@ package projection
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/muhlemmer/gu"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/language"
 
@@ -85,7 +87,7 @@ func TestUserGrantProjection_reduces(t *testing.T) {
 			executer: &testExecuter{
 				executions: []execution{
 					{
-						expectedStmt: "INSERT INTO projections.user_grants5 (id, resource_owner, instance_id, creation_date, change_date, sequence, user_id, resource_owner_user, project_id, resource_owner_project, grant_id, granted_org, roles, state) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)",
+						expectedStmt: "INSERT INTO projections.user_grants5 (id, resource_owner, instance_id, creation_date, change_date, sequence, user_id, resource_owner_user, project_id, resource_owner_project, grant_id, granted_org, roles, state, expiration_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
 						expectedArgs: []interface{}{
 							"agg-id",
 							"ro-id",
@@ -101,6 +103,7 @@ func TestUserGrantProjection_reduces(t *testing.T) {
 							"",
 							database.TextArray[string]{"role"},
 							domain.UserGrantStateActive,
+							(*time.Time)(nil),
 						},
 					},
 				},
@@ -152,7 +155,7 @@ func TestUserGrantProjection_reduces(t *testing.T) {
 				executer: &testExecuter{
 					executions: []execution{
 						{
-							expectedStmt: "INSERT INTO projections.user_grants5 (id, resource_owner, instance_id, creation_date, change_date, sequence, user_id, resource_owner_user, project_id, resource_owner_project, grant_id, granted_org, roles, state) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)",
+							expectedStmt: "INSERT INTO projections.user_grants5 (id, resource_owner, instance_id, creation_date, change_date, sequence, user_id, resource_owner_user, project_id, resource_owner_project, grant_id, granted_org, roles, state, expiration_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
 							expectedArgs: []interface{}{
 								"agg-id",
 								"ro-id",
@@ -168,6 +171,7 @@ func TestUserGrantProjection_reduces(t *testing.T) {
 								"",
 								database.TextArray[string]{"role"},
 								domain.UserGrantStateActive,
+								(*time.Time)(nil),
 							},
 						},
 					},
@@ -223,7 +227,7 @@ func TestUserGrantProjection_reduces(t *testing.T) {
 				executer: &testExecuter{
 					executions: []execution{
 						{
-							expectedStmt: "INSERT INTO projections.user_grants5 (id, resource_owner, instance_id, creation_date, change_date, sequence, user_id, resource_owner_user, project_id, resource_owner_project, grant_id, granted_org, roles, state) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)",
+							expectedStmt: "INSERT INTO projections.user_grants5 (id, resource_owner, instance_id, creation_date, change_date, sequence, user_id, resource_owner_user, project_id, resource_owner_project, grant_id, granted_org, roles, state, expiration_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
 							expectedArgs: []interface{}{
 								"agg-id",
 								"ro-id",
@@ -239,6 +243,7 @@ func TestUserGrantProjection_reduces(t *testing.T) {
 								"org3",
 								database.TextArray[string]{"role"},
 								domain.UserGrantStateActive,
+								(*time.Time)(nil),
 							},
 						},
 					},
@@ -382,6 +387,66 @@ func TestUserGrantProjection_reduces(t *testing.T) {
 							expectedStmt: "DELETE FROM projections.user_grants5 WHERE (id = $1) AND (instance_id = $2)",
 							expectedArgs: []interface{}{
 								anyArg{},
+								"instance-id",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "reduceExpirationSet",
+			args: args{
+				event: getEvent(
+					testEvent(
+						usergrant.UserGrantExpirationSetType,
+						usergrant.AggregateType,
+						[]byte(`{"expirationDate": "2030-01-02T03:04:05Z"}`),
+					), usergrant.UserGrantExpirationSetEventMapper),
+			},
+			reduce: (&userGrantProjection{}).reduceExpirationSet,
+			want: wantReduce{
+				aggregateType: usergrant.AggregateType,
+				sequence:      15,
+				executer: &testExecuter{
+					executions: []execution{
+						{
+							expectedStmt: "UPDATE projections.user_grants5 SET (change_date, expiration_date, sequence) = ($1, $2, $3) WHERE (id = $4) AND (instance_id = $5)",
+							expectedArgs: []interface{}{
+								anyArg{},
+								gu.Ptr(time.Date(2030, 1, 2, 3, 4, 5, 0, time.UTC)),
+								uint64(15),
+								"agg-id",
+								"instance-id",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "reduceExpirationSet, removed",
+			args: args{
+				event: getEvent(
+					testEvent(
+						usergrant.UserGrantExpirationSetType,
+						usergrant.AggregateType,
+						[]byte(`{"expirationDate": null}`),
+					), usergrant.UserGrantExpirationSetEventMapper),
+			},
+			reduce: (&userGrantProjection{}).reduceExpirationSet,
+			want: wantReduce{
+				aggregateType: usergrant.AggregateType,
+				sequence:      15,
+				executer: &testExecuter{
+					executions: []execution{
+						{
+							expectedStmt: "UPDATE projections.user_grants5 SET (change_date, expiration_date, sequence) = ($1, $2, $3) WHERE (id = $4) AND (instance_id = $5)",
+							expectedArgs: []interface{}{
+								anyArg{},
+								(*time.Time)(nil),
+								uint64(15),
+								"agg-id",
 								"instance-id",
 							},
 						},

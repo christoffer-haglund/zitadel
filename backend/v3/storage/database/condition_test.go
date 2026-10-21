@@ -92,6 +92,25 @@ func TestWrite(t *testing.T) {
 			},
 		},
 		{
+			name: "now condition",
+			cond: NewNowCondition(NewColumn("table", "column1"), NumberOperationGreaterThan),
+			want: want{
+				stmt: "table.column1 > NOW()",
+				args: nil,
+			},
+		},
+		{
+			name: "null or after now condition",
+			cond: Or(
+				IsNull(NewColumn("table", "column1")),
+				NewNowCondition(NewColumn("table", "column1"), NumberOperationGreaterThan),
+			),
+			want: want{
+				stmt: "(table.column1 IS NULL OR table.column1 > NOW())",
+				args: nil,
+			},
+		},
+		{
 			name: "text condition",
 			cond: NewTextCondition(NewColumn("table", "column1"), TextOperationEqual, "some text"),
 			want: want{

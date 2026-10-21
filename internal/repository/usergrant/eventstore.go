@@ -12,4 +12,5 @@ func init() {
 	eventstore.RegisterFilterEventMapper(AggregateType, UserGrantCascadeRemovedType, UserGrantCascadeRemovedEventMapper)
 	eventstore.RegisterFilterEventMapper(AggregateType, UserGrantDeactivatedType, UserGrantDeactivatedEventMapper)
 	eventstore.RegisterFilterEventMapper(AggregateType, UserGrantReactivatedType, UserGrantReactivatedEventMapper)
+	eventstore.RegisterFilterEventMapper(AggregateType, UserGrantExpirationSetType, UserGrantExpirationSetEventMapper)
 }

@@ -23,6 +23,7 @@ var (
 			", projections.user_grants5.roles" +
 			", roles.role_information" +
 			", projections.user_grants5.state" +
+			", projections.user_grants5.expiration_date" +
 			", projections.user_grants5.user_id" +
 			", projections.users14.username" +
 			", projections.users14.type" +
@@ -64,6 +65,7 @@ var (
 		"roles",
 		"role_information",
 		"state",
+		"expiration_date",
 		"user_id",
 		"username",
 		"type",
@@ -95,6 +97,7 @@ var (
 			", projections.user_grants5.roles" +
 			", roles.role_information" +
 			", projections.user_grants5.state" +
+			", projections.user_grants5.expiration_date" +
 			", projections.user_grants5.user_id" +
 			", projections.users14.username" +
 			", projections.users14.type" +
@@ -179,6 +182,7 @@ func Test_UserGrantPrepares(t *testing.T) {
 						database.TextArray[string]{"role-key"},
 						`[{"display_name":"displayName","group_name":"groupName","role_key":"role-key"}]`,
 						domain.UserGrantStateActive,
+						nil,
 						"user-id",
 						"username",
 						domain.UserTypeHuman,
@@ -251,6 +255,7 @@ func Test_UserGrantPrepares(t *testing.T) {
 						database.TextArray[string]{"role-key"},
 						`[{"display_name":"displayName","group_name":"groupName","role_key":"role-key"}]`,
 						domain.UserGrantStateActive,
+						nil,
 						"user-id",
 						"username",
 						domain.UserTypeMachine,
@@ -323,6 +328,7 @@ func Test_UserGrantPrepares(t *testing.T) {
 						database.TextArray[string]{"role-key"},
 						`[{"display_name":"displayName","group_name":"groupName","role_key":"role-key"}]`,
 						domain.UserGrantStateActive,
+						nil,
 						"user-id",
 						"username",
 						domain.UserTypeHuman,
@@ -395,6 +401,7 @@ func Test_UserGrantPrepares(t *testing.T) {
 						database.TextArray[string]{"role-key"},
 						`[{"display_name":"displayName","group_name":"groupName","role_key":"role-key"}]`,
 						domain.UserGrantStateActive,
+						nil,
 						"user-id",
 						"username",
 						domain.UserTypeHuman,
@@ -467,6 +474,7 @@ func Test_UserGrantPrepares(t *testing.T) {
 						database.TextArray[string]{"role-key"},
 						`[{"display_name":"displayName","group_name":"groupName","role_key":"role-key"}]`,
 						domain.UserGrantStateActive,
+						nil,
 						"user-id",
 						"username",
 						domain.UserTypeHuman,
@@ -569,6 +577,7 @@ func Test_UserGrantPrepares(t *testing.T) {
 							database.TextArray[string]{"role-key"},
 							`[{"display_name":"displayName","group_name":"groupName","role_key":"role-key"}]`,
 							domain.UserGrantStateActive,
+							nil,
 							"user-id",
 							"username",
 							domain.UserTypeHuman,
@@ -650,6 +659,7 @@ func Test_UserGrantPrepares(t *testing.T) {
 							database.TextArray[string]{"role-key"},
 							`[{"display_name":"displayName","group_name":"groupName","role_key":"role-key"}]`,
 							domain.UserGrantStateActive,
+							nil,
 							"user-id",
 							"username",
 							domain.UserTypeMachine,
@@ -731,6 +741,7 @@ func Test_UserGrantPrepares(t *testing.T) {
 							database.TextArray[string]{"role-key"},
 							`[{"display_name":"displayName","group_name":"groupName","role_key":"role-key"}]`,
 							domain.UserGrantStateActive,
+							nil,
 							"user-id",
 							"username",
 							domain.UserTypeMachine,
@@ -812,6 +823,7 @@ func Test_UserGrantPrepares(t *testing.T) {
 							database.TextArray[string]{"role-key"},
 							`[{"display_name":"displayName","group_name":"groupName","role_key":"role-key"}]`,
 							domain.UserGrantStateActive,
+							nil,
 							"user-id",
 							"username",
 							domain.UserTypeHuman,
@@ -893,6 +905,7 @@ func Test_UserGrantPrepares(t *testing.T) {
 							database.TextArray[string]{"role-key"},
 							`[{"display_name":"displayName","group_name":"groupName","role_key":"role-key"}]`,
 							domain.UserGrantStateActive,
+							nil,
 							"user-id",
 							"username",
 							domain.UserTypeHuman,
@@ -974,6 +987,7 @@ func Test_UserGrantPrepares(t *testing.T) {
 							database.TextArray[string]{"role-key"},
 							`[{"display_name":"displayName","group_name":"groupName","role_key":"role-key"}]`,
 							domain.UserGrantStateActive,
+							nil,
 							"user-id",
 							"username",
 							domain.UserTypeHuman,
@@ -1005,6 +1019,7 @@ func Test_UserGrantPrepares(t *testing.T) {
 							database.TextArray[string]{"role-key"},
 							`[{"display_name":"displayName","group_name":"groupName","role_key":"role-key"}]`,
 							domain.UserGrantStateActive,
+							nil,
 							"user-id",
 							"username",
 							domain.UserTypeHuman,

@@ -96,7 +96,7 @@ func (s *Server) Introspect(ctx context.Context, r *op.Request[op.IntrospectionR
 	if err = validateIntrospectionAudience(token.audience, client.clientID, client.projectID); err != nil {
 		return nil, err
 	}
-	userInfo, err := s.userInfo(
+	userInfo, grantsExpiration, err := s.userInfo(
 		token.userID,
 		token.scope,
 		client.projectID,
@@ -109,11 +109,13 @@ func (s *Server) Introspect(ctx context.Context, r *op.Request[op.IntrospectionR
 		return nil, err
 	}
 	introspectionResp := &oidc.IntrospectionResponse{
-		Active:                          true,
-		Scope:                           token.scope,
-		ClientID:                        token.clientID,
-		TokenType:                       oidc.BearerToken,
-		Expiration:                      oidc.FromTime(token.tokenExpiration),
+		Active:    true,
+		Scope:     token.scope,
+		ClientID:  token.clientID,
+		TokenType: oidc.BearerToken,
+		// Resource servers may cache the introspection result until it expires,
+		// so it must not outlive any time-bound grant it is based on.
+		Expiration:                      oidc.FromTime(capExpiration(token.tokenExpiration, grantsExpiration)),
 		IssuedAt:                        oidc.FromTime(token.tokenCreation),
 		AuthTime:                        oidc.FromTime(token.authTime),
 		NotBefore:                       oidc.FromTime(token.tokenCreation),

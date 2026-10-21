@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 	"slices"
+	"time"
 
 	"github.com/zitadel/zitadel/internal/api/authz"
 	"github.com/zitadel/zitadel/internal/domain"
@@ -60,8 +61,54 @@ func (c *Commands) addUserGrant(ctx context.Context, userGrant *domain.UserGrant
 		userGrant.ProjectID,
 		userGrant.ProjectGrantID,
 		userGrant.RoleKeys,
-	).WithOwnerOrgs(owners.userResourceOwner, owners.projectResourceOwner, owners.grantedOrg)
+	).WithOwnerOrgs(owners.userResourceOwner, owners.projectResourceOwner, owners.grantedOrg).
+		WithExpirationDate(userGrant.ExpirationDate)
 	return command, addedUserGrant, nil
+}
+
+// SetUserGrantExpiration sets the point in time after which the user grant is no longer effective.
+// If expirationDate is nil, the expiration is removed and the grant does not expire anymore.
+func (c *Commands) SetUserGrantExpiration(ctx context.Context, grantID, resourceOwner string, expirationDate *time.Time, check UserGrantPermissionCheck) (_ *domain.UserGrant, err error) {
+	ctx, span := tracing.NewSpan(ctx)
+	defer func() { span.EndWithError(err) }()
+
+	if grantID == "" {
+		return nil, zerrors.ThrowInvalidArgument(nil, "COMMAND-Exp1b", "Errors.UserGrant.IDMissing")
+	}
+	existingUserGrant, err := c.userGrantWriteModelByID(ctx, grantID, resourceOwner)
+	if err != nil {
+		return nil, err
+	}
+	if existingUserGrant.State == domain.UserGrantStateUnspecified || existingUserGrant.State == domain.UserGrantStateRemoved {
+		return nil, zerrors.ThrowNotFound(nil, "COMMAND-Exp1c", "Errors.UserGrant.NotFound")
+	}
+	if check != nil {
+		err = check(existingUserGrant.ProjectID, existingUserGrant.ProjectGrantID)(existingUserGrant.ResourceOwner, "")
+	} else {
+		err = checkExplicitProjectPermission(ctx, existingUserGrant.ProjectGrantID, existingUserGrant.ProjectID)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if timePtrEqual(existingUserGrant.ExpirationDate, expirationDate) {
+		return userGrantWriteModelToUserGrant(existingUserGrant), nil
+	}
+	userGrantAgg := UserGrantAggregateFromWriteModel(&NewUserGrantWriteModel(grantID, existingUserGrant.ResourceOwner).WriteModel)
+	pushedEvents, err := c.eventstore.Push(ctx, usergrant.NewUserGrantExpirationSetEvent(ctx, userGrantAgg, expirationDate))
+	if err != nil {
+		return nil, err
+	}
+	if err = AppendAndReduce(existingUserGrant, pushedEvents...); err != nil {
+		return nil, err
+	}
+	return userGrantWriteModelToUserGrant(existingUserGrant), nil
+}
+
+func timePtrEqual(a, b *time.Time) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return a.Equal(*b)
 }
 
 func (c *Commands) ChangeUserGrant(ctx context.Context, userGrant *domain.UserGrant, cascade, ignoreUnchanged bool, check UserGrantPermissionCheck) (_ *domain.UserGrant, err error) {

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"slices"
+	"time"
 
 	es_models "github.com/zitadel/zitadel/internal/eventstore/v1/models"
 )
@@ -14,6 +15,9 @@ type UserGrant struct {
 	ProjectID      string
 	ProjectGrantID string
 	RoleKeys       []string
+	// ExpirationDate is the point in time after which the grant is no longer effective.
+	// nil means the grant does not expire.
+	ExpirationDate *time.Time
 }
 
 type UserGrantState int32

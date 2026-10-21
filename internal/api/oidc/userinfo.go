@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/dop251/goja"
 	"github.com/zitadel/logging"
@@ -52,7 +53,7 @@ func (s *Server) UserInfo(ctx context.Context, r *op.Request[oidc.UserInfoReques
 		}
 	}
 
-	userInfo, err := s.userInfo(
+	userInfo, _, err := s.userInfo(
 		token.userID,
 		token.scope,
 		projectID,
@@ -97,8 +98,9 @@ func (s *Server) userInfo(
 		rawUserInfo                  *oidc.UserInfo
 		qu                           *query.OIDCUserInfo
 		roleAudience, requestedRoles []string
+		grantsExpiration             *time.Time
 	)
-	return func(ctx context.Context, roleAssertion bool, triggerType domain.TriggerType, actor *domain.TokenActor) (_ *oidc.UserInfo, err error) {
+	return func(ctx context.Context, roleAssertion bool, triggerType domain.TriggerType, actor *domain.TokenActor) (_ *oidc.UserInfo, _ *time.Time, err error) {
 		once.Do(func() {
 			ctx, span := tracing.NewSpan(ctx)
 			defer func() { span.EndWithError(err) }()
@@ -110,9 +112,10 @@ func (s *Server) userInfo(
 				return
 			}
 			rawUserInfo = userInfoToOIDC(qu, userInfoAssertion, scope, s.assetAPIPrefix(ctx))
+			grantsExpiration = earliestGrantExpiration(qu.UserGrants)
 		})
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		// copy the userinfo to make sure the assert roles and actions use their own copy (e.g. map)
 		userInfo := &oidc.UserInfo{
@@ -124,8 +127,32 @@ func (s *Server) userInfo(
 			Claims:          maps.Clone(rawUserInfo.Claims),
 		}
 		assertRoles(projectID, qu, roleAudience, requestedRoles, roleAssertion, userInfo)
-		return userInfo, s.userinfoFlows(ctx, qu, userInfo, triggerType, clientID, actor)
+		return userInfo, grantsExpiration, s.userinfoFlows(ctx, qu, userInfo, triggerType, clientID, actor)
 	}
+}
+
+// earliestGrantExpiration returns the earliest expiration date of the passed (effective) grants,
+// or nil if none of them expires.
+// Self-contained tokens (JWT access tokens and ID tokens) must not outlive this point in time,
+// because the role claims they carry can't be revoked once issued.
+func earliestGrantExpiration(grants []query.UserGrant) (earliest *time.Time) {
+	for _, grant := range grants {
+		if grant.ExpirationDate == nil {
+			continue
+		}
+		if earliest == nil || grant.ExpirationDate.Before(*earliest) {
+			earliest = grant.ExpirationDate
+		}
+	}
+	return earliest
+}
+
+// capExpiration returns exp, or the grants expiration if it is earlier.
+func capExpiration(exp time.Time, grantsExpiration *time.Time) time.Time {
+	if grantsExpiration != nil && grantsExpiration.Before(exp) {
+		return *grantsExpiration
+	}
+	return exp
 }
 
 // prepareRoles scans the requested scopes and builds the requested roles

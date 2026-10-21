@@ -196,6 +196,44 @@ func (c *MockAuthorizationRepositoryExistsRoleCall) DoAndReturn(f func(database.
 	return c
 }
 
+// ExpirationDateColumn mocks base method.
+func (m *MockAuthorizationRepository) ExpirationDateColumn() database.Column {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExpirationDateColumn")
+	ret0, _ := ret[0].(database.Column)
+	return ret0
+}
+
+// ExpirationDateColumn indicates an expected call of ExpirationDateColumn.
+func (mr *MockAuthorizationRepositoryMockRecorder) ExpirationDateColumn() *MockAuthorizationRepositoryExpirationDateColumnCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExpirationDateColumn", reflect.TypeOf((*MockAuthorizationRepository)(nil).ExpirationDateColumn))
+	return &MockAuthorizationRepositoryExpirationDateColumnCall{Call: call}
+}
+
+// MockAuthorizationRepositoryExpirationDateColumnCall wrap *gomock.Call
+type MockAuthorizationRepositoryExpirationDateColumnCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockAuthorizationRepositoryExpirationDateColumnCall) Return(arg0 database.Column) *MockAuthorizationRepositoryExpirationDateColumnCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockAuthorizationRepositoryExpirationDateColumnCall) Do(f func() database.Column) *MockAuthorizationRepositoryExpirationDateColumnCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockAuthorizationRepositoryExpirationDateColumnCall) DoAndReturn(f func() database.Column) *MockAuthorizationRepositoryExpirationDateColumnCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
 // Get mocks base method.
 func (m *MockAuthorizationRepository) Get(ctx context.Context, client database.QueryExecutor, opts ...database.QueryOption) (*domain.Authorization, error) {
 	m.ctrl.T.Helper()
@@ -512,6 +550,44 @@ func (c *MockAuthorizationRepositoryListCall) DoAndReturn(f func(context.Context
 	return c
 }
 
+// NotExpiredCondition mocks base method.
+func (m *MockAuthorizationRepository) NotExpiredCondition() database.Condition {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NotExpiredCondition")
+	ret0, _ := ret[0].(database.Condition)
+	return ret0
+}
+
+// NotExpiredCondition indicates an expected call of NotExpiredCondition.
+func (mr *MockAuthorizationRepositoryMockRecorder) NotExpiredCondition() *MockAuthorizationRepositoryNotExpiredConditionCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NotExpiredCondition", reflect.TypeOf((*MockAuthorizationRepository)(nil).NotExpiredCondition))
+	return &MockAuthorizationRepositoryNotExpiredConditionCall{Call: call}
+}
+
+// MockAuthorizationRepositoryNotExpiredConditionCall wrap *gomock.Call
+type MockAuthorizationRepositoryNotExpiredConditionCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockAuthorizationRepositoryNotExpiredConditionCall) Return(arg0 database.Condition) *MockAuthorizationRepositoryNotExpiredConditionCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockAuthorizationRepositoryNotExpiredConditionCall) Do(f func() database.Condition) *MockAuthorizationRepositoryNotExpiredConditionCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockAuthorizationRepositoryNotExpiredConditionCall) DoAndReturn(f func() database.Condition) *MockAuthorizationRepositoryNotExpiredConditionCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
 // PrimaryKeyColumns mocks base method.
 func (m *MockAuthorizationRepository) PrimaryKeyColumns() []database.Column {
 	m.ctrl.T.Helper()
@@ -698,6 +774,44 @@ func (c *MockAuthorizationRepositoryRoleConditionCall) Do(f func(database.TextOp
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
 func (c *MockAuthorizationRepositoryRoleConditionCall) DoAndReturn(f func(database.TextOperation, string) database.Condition) *MockAuthorizationRepositoryRoleConditionCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// SetExpirationDate mocks base method.
+func (m *MockAuthorizationRepository) SetExpirationDate(expirationDate *time.Time) database.Change {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetExpirationDate", expirationDate)
+	ret0, _ := ret[0].(database.Change)
+	return ret0
+}
+
+// SetExpirationDate indicates an expected call of SetExpirationDate.
+func (mr *MockAuthorizationRepositoryMockRecorder) SetExpirationDate(expirationDate any) *MockAuthorizationRepositorySetExpirationDateCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetExpirationDate", reflect.TypeOf((*MockAuthorizationRepository)(nil).SetExpirationDate), expirationDate)
+	return &MockAuthorizationRepositorySetExpirationDateCall{Call: call}
+}
+
+// MockAuthorizationRepositorySetExpirationDateCall wrap *gomock.Call
+type MockAuthorizationRepositorySetExpirationDateCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockAuthorizationRepositorySetExpirationDateCall) Return(arg0 database.Change) *MockAuthorizationRepositorySetExpirationDateCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockAuthorizationRepositorySetExpirationDateCall) Do(f func(*time.Time) database.Change) *MockAuthorizationRepositorySetExpirationDateCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockAuthorizationRepositorySetExpirationDateCall) DoAndReturn(f func(*time.Time) database.Change) *MockAuthorizationRepositorySetExpirationDateCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

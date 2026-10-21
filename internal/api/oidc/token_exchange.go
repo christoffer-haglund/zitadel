@@ -553,9 +553,9 @@ func (s *Server) createExchangeJWT(
 	if err != nil {
 		return "", "", 0, err
 	}
-	accessToken, err = s.createJWT(ctx, client, session, getUserInfo, roleAssertion, getSigner)
+	accessToken, expTime, err := s.createJWT(ctx, client, session, getUserInfo, roleAssertion, getSigner)
 	if err != nil {
 		return "", "", 0, err
 	}
-	return accessToken, session.RefreshToken, timeToOIDCExpiresIn(session.Expiration), nil
+	return accessToken, session.RefreshToken, timeToOIDCExpiresIn(expTime), nil
 }

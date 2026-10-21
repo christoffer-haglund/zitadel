@@ -44,6 +44,8 @@ with application as (
      WHERE ug.instance_id = $1
        AND ug.user_id = $5
        AND ug.state = $8
+       /* time-bound grants are only effective until their expiration date */
+       AND (ug.expiration_date IS NULL OR ug.expiration_date > now())
 )
 SELECT
     /* project existence does not need to be checked, or resourceowner of user and project are equal, or resourceowner of user has project granted*/

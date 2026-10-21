@@ -132,6 +132,27 @@ service AuthorizationService {
       }
     };
   }
+
+  // Set Role Assignment Expiration
+  //
+  // SetAuthorizationExpiration sets or removes the point in time after which an authorization is no longer effective.
+  // This allows time-bound (just-in-time) role assignments, which are enforced by Zitadel when issuing tokens
+  // and answering userinfo and introspection requests, without relying on an external process to revoke them.
+  //
+  // Note: Authorization in this context refers to role assignments, not to OAuth authorization.
+  //
+  // If the expiration date is omitted, the expiration is removed and the authorization does not expire anymore.
+  // An expired authorization can be extended by setting a new expiration date.
+  //
+  // Required permissions:
+  //   - "user.grant.write"
+  rpc SetAuthorizationExpiration(SetAuthorizationExpirationRequest) returns (SetAuthorizationExpirationResponse) {
+    option (zitadel.protoc_gen_zitadel.v2.options) = {
+      auth_option: {
+        permission: "authenticated"
+      }
+    };
+  }
 }
 
 message ListAuthorizationsRequest {
@@ -206,6 +227,15 @@ message CreateAuthorizationRequest {
       min_length: 1;
       max_length: 200;
       example: "[\"user\",\"admin\"]";
+    }
+  ];
+
+  // ExpirationDate is the point in time after which the authorization is no longer effective.
+  // If not set, the authorization does not expire.
+  // Use SetAuthorizationExpiration to change or remove it later.
+  google.protobuf.Timestamp expiration_date = 5 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      example: "\"2025-01-23T18:00:00.000Z\"";
     }
   ];
 }
@@ -326,6 +356,36 @@ message DeactivateAuthorizationResponse {
   google.protobuf.Timestamp change_date = 1 [
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       example: "\"2024-12-18T07:50:47.492Z\"";
+    }
+  ];
+}
+
+message SetAuthorizationExpirationRequest {
+  // ID is the unique identifier of the authorization.
+  string id = 1 [
+    (validate.rules).string = {min_len: 1, max_len: 200},
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      min_length: 1;
+      max_length: 200;
+      example: "\"163840776835432345\"";
+    },
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  // ExpirationDate is the point in time after which the authorization is no longer effective.
+  // If omitted, the expiration is removed and the authorization does not expire anymore.
+  google.protobuf.Timestamp expiration_date = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      example: "\"2025-01-23T18:00:00.000Z\"";
+    }
+  ];
+}
+
+message SetAuthorizationExpirationResponse {
+  // ChangeDate is the last timestamp when the authorization was changed.
+  google.protobuf.Timestamp change_date = 1 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      example: "\"2025-01-23T10:34:18.051Z\"";
     }
   ];
 }

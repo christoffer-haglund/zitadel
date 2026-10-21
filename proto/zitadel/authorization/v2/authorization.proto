@@ -38,6 +38,13 @@ message Authorization {
 
   // Roles contains the roles the user was granted for the project.
   repeated Role roles = 8;
+
+  // ExpirationDate is the point in time after which the authorization is no longer effective.
+  // Once expired, Zitadel will not include the authorization in any authorization information like an access token,
+  // and self-contained tokens (JWT access tokens and ID tokens) issued based on it will not outlive it.
+  // The state of the authorization is not changed by the expiration.
+  // If not set, the authorization does not expire.
+  google.protobuf.Timestamp expiration_date = 9 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {example: "\"2025-01-23T18:00:00.000Z\""}];
 }
 
 enum State {
